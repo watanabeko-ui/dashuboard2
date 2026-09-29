@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>寺子屋ナビ</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1d2433;--sub:#5b6475;--line:#dde1e8;--main:#1f4e79;--acc:#c55a11;--ok:#2e7d4f;--warn:#b7791f;--bad:#c0392b;--soft:#eaf1f8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161d;--card:#1b212b;--ink:#e6e9ef;--sub:#9aa3b2;--line:#2c3441;--main:#6fa8dc;--acc:#f0965a;--soft:#1f2a38}}
+:root[data-theme="dark"]{--bg:#12161d;--card:#1b212b;--ink:#e6e9ef;--sub:#9aa3b2;--line:#2c3441;--main:#6fa8dc;--acc:#f0965a;--soft:#1f2a38}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic","Meiryo",sans-serif;line-height:1.6}
+header{background:#1f4e79;color:#fff;padding:18px 16px}
+header h1{margin:0;font-size:22px}header p{margin:2px 0 0;font-size:13px;opacity:.85}
+.wrap{max-width:1040px;margin:0 auto;padding:16px}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+nav button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 14px;border-radius:8px;cursor:pointer;font-size:14px}
+nav button.on{background:var(--main);color:#fff;border-color:var(--main)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+h2{font-size:17px;margin:0 0 10px;color:var(--main)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--soft);border-radius:10px;padding:12px}
+.kpi b{display:block;font-size:24px}.kpi span{font-size:12px;color:var(--sub)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:6px;text-align:center}
+th{color:var(--sub);font-weight:600;font-size:12px}
+td:first-child,th:first-child{text-align:left}
+input[type=number],input[type=text],select{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font-size:14px;font-family:inherit}
+td input[type=number]{max-width:90px}
+.scroll{overflow-x:auto}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:700px){.row{grid-template-columns:1fr}}
+.muted{color:var(--sub);font-size:12px}
+.big{font-size:40px;font-weight:700;color:var(--acc)}
+.chk label{display:flex;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);cursor:pointer}
+.lv{display:flex;gap:4px;margin:10px 0}.lv div{flex:1;text-align:center;padding:8px 2px;border-radius:6px;background:var(--line);font-size:12px}.lv div.on{background:var(--acc);color:#fff;font-weight:700}
+.talk{background:var(--soft);border-left:4px solid var(--acc);padding:14px;border-radius:6px;font-size:17px;white-space:pre-wrap}
+.btn{border:0;background:var(--acc);color:#fff;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:14px}
+.btn.g{background:var(--sub)}
+.tab{display:none}.tab.on{display:block}
+svg text{fill:var(--sub);font-size:11px}
+@media print{nav,.btn{display:none}.tab{display:block!important}body{background:#fff}}
+</style>
+</head>
+<body>
+<header><h1>寺子屋ナビ</h1><p>三島BASE「現代の寺子屋」化戦略　進捗・SROI・成長度・紹介トーク支援ツール（SL三島BASE 渡辺こてつ）</p></header>
+<div class="wrap">
+<nav id="nav">
+<button data-t="dash" class="on">① 進捗ダッシュボード</button>
+<button data-t="sroi">⑫ SROI算出</button>
+<button data-t="grow">⑩ 成長度評価</button>
+<button data-t="talk">紹介トーク作成</button>
+</nav>
+
+<section class="tab on" id="dash">
+<div class="card"><h2>ティッピングポイント（71世帯）への現在地</h2>
+<div class="kpis" id="kpis"></div>
+<div style="margin-top:12px" class="bar"><i id="pbar"></i></div>
+<p class="muted" id="pnote"></p></div>
+<div class="card"><h2>累計AO生の推移（実績 vs 計画）</h2><div id="chart"></div></div>
+<div class="card"><h2>月次実績の入力</h2>
+<div class="row" style="margin-bottom:10px">
+<label>開始時AO生<input type="number" id="base" min="0"></label>
+<label>担当世帯数（普及率の分母）<input type="number" id="house" min="1"></label>
+</div>
+<div class="scroll"><table id="mt"><thead><tr><th>月</th><th>一般聴講生<br>(目標4)</th><th>Life&amp;Works<br>(目標2)</th><th>商店主DX<br>(目標2)</th><th>新規計</th><th>うち紹介経由</th><th>累計</th><th>計画累計</th></tr></thead><tbody></tbody></table></div>
+<p class="muted">空欄の月は未確定として扱います。入力内容はこのブラウザに自動保存されます。</p>
+<h2 style="margin-top:14px">層別の達成率（入力済み月の合計）</h2><div id="layer"></div>
+</div>
+</section>
+
+<section class="tab" id="sroi">
+<div class="card"><h2>SROI（社会的投資収益率）</h2>
+<div class="row"><div><div class="big" id="sroiv">1 : 0.0</div><p class="muted">社会的価値の総額 ÷ 投入額。目標値 1:16</p></div>
+<div class="kpis"><div class="kpi"><b id="sin">0</b><span>投入額（円）</span></div><div class="kpi"><b id="sout">0</b><span>社会的価値（円）</span></div></div></div></div>
+<div class="card"><h2>インプット（投入）</h2><div class="scroll"><table id="it"><thead><tr><th>項目</th><th>数量</th><th>単価(円)</th><th>小計</th><th></th></tr></thead><tbody></tbody></table></div>
+<button class="btn g" onclick="addRow('inputs')">＋ 行を追加</button></div>
+<div class="card"><h2>アウトカム（社会的価値）</h2>
+<p class="muted">価値 = 数量 × 金銭代理指標 ×（1−デッドウェイト%）×（1−他要因の寄与%）。初期値は入力例（仮の値）です。根拠を説明できる値（公的統計・実費など）に置き換えてください。</p>
+<div class="scroll"><table id="ot"><thead><tr><th>アウトカム</th><th>数量</th><th>代理指標(円)</th><th>DW%</th><th>寄与%</th><th>価値</th><th></th></tr></thead><tbody></tbody></table></div>
+<button class="btn g" onclick="addRow('outcomes')">＋ 行を追加</button></div>
+</section>
+
+<section class="tab" id="grow">
+<div class="card"><h2>「明日の先生」成長度評価シート</h2>
+<div class="row"><label>AO生（ID・呼び名）<input type="text" id="gname" placeholder="例：AO-001"></label><label>評価日<input type="text" id="gdate"></label></div>
+<div class="chk" id="chk"></div>
+<div class="lv" id="lv"></div>
+<p id="gmsg"></p>
+<button class="btn" onclick="saveGrow()">この評価を記録</button> <button class="btn g" onclick="resetGrow()">クリア</button></div>
+<div class="card"><h2>記録一覧</h2><div class="scroll"><table id="gt"><thead><tr><th>AO生</th><th>評価日</th><th>点数</th><th>レベル</th><th></th></tr></thead><tbody></tbody></table></div>
+<p class="muted" id="gsum"></p></div>
+</section>
+
+<section class="tab" id="talk">
+<div class="card"><h2>紹介の連鎖（ミラの輪）30秒トーク作成</h2>
+<p class="muted">「自分の言葉でどう伝えればよいかわからない」AO生と一緒に、4ステップの型で紹介トークを作ります。</p>
+<div class="row">
+<label>伝える相手<select id="to"><option>ご近所の方</option><option>友人</option><option>親</option><option>子ども・孫</option><option>お店のお客さん</option></select></label>
+<label>誘う場所<select id="pl"><option>三島BASE</option><option>近所のお店（AO校）</option><option>ちょっと相談会</option></select></label>
+<label>1. できるようになったこと<input type="text" id="t1" value="カドイケでスマホ払い"></label>
+<label>2. 前に不安だったこと<input type="text" id="t2" value="操作を間違えたらどうしよう"></label>
+</div>
+<div style="margin-top:14px" class="talk" id="out"></div>
+<p><button class="btn" onclick="copyTalk()">コピー</button> <span class="muted" id="cp"></span></p></div>
+</section>
+<p style="text-align:right"><button class="btn g" onclick="window.print()">印刷・PDF保存</button> <button class="btn g" onclick="if(confirm('入力内容を初期値に戻しますか？')){S=def();save();renderAll()}">初期値に戻す</button></p>
+</div>
+
+<script>
+const MONTHS=['5月','6月','7月','8月','9月','10月'];
+const KEY='terakoya_navi_v1';
+const def=()=>({base:23,house:185,m:[[1,2,2,0],[0,0,1,0],[0,1,1,0],[0,0,0,0],['','','',''],['','','','']],
+ inputs:[['プランナー活動時間(h)',240,2000],['教材・会場・交通費',1,50000]],
+ outcomes:[['行政手続きの時間・交通費削減(世帯)',31,6000,20,20],['詐欺・トラブル予防(件)',3,300000,30,30],['孤立予防・交流参加(人)',20,20000,30,30],['明日の先生の指導時間(h)',30,2000,10,20],['拠点店舗の価値向上(店)',2,100000,30,40]],
+ grow:[]});
+let S;try{S=JSON.parse(localStorage.getItem(KEY))||def()}catch(e){S=def()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const $=id=>document.getElementById(id);const n=v=>(v===''||v==null||isNaN(+v))?null:+v;const yen=v=>Math.round(v).toLocaleString('ja-JP');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#nav button,.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');$(b.dataset.t).classList.add('on')});
+
+// ---------- DASH ----------
+function buildMonths(){const tb=document.querySelector('#mt tbody');tb.innerHTML='';
+ MONTHS.forEach((mo,i)=>{const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${mo}（${i+1}ヶ月目）</td>`+[0,1,2].map(j=>`<td><input type="number" min="0" data-i="${i}" data-j="${j}" value="${S.m[i][j]}"></td>`).join('')+`<td class="sum"></td><td><input type="number" min="0" data-i="${i}" data-j="3" value="${S.m[i][3]}"></td><td class="cum"></td><td>${S.base+8*(i+1)}</td>`;tb.appendChild(tr)});
+ tb.querySelectorAll('input').forEach(inp=>inp.oninput=()=>{S.m[inp.dataset.i][inp.dataset.j]=inp.value===''?'':+inp.value;save();renderDash()})}
+$('base').oninput=e=>{S.base=+e.target.value||0;save();buildMonths();renderDash()};
+$('house').oninput=e=>{S.house=+e.target.value||1;save();renderDash()};
+function renderDash(){$('base').value=S.base;$('house').value=S.house;
+ let cum=S.base,cums=[],done=0,lay=[0,0,0],ref=0;const rows=document.querySelectorAll('#mt tbody tr');
+ S.m.forEach((r,i)=>{const v=r.slice(0,3).map(n);const filled=v.some(x=>x!==null);const s=v.reduce((a,b)=>a+(b||0),0);
+  if(filled){cum+=s;done=i+1;v.forEach((x,j)=>lay[j]+=x||0);ref+=n(r[3])||0;cums.push(cum)}else cums.push(null);
+  rows[i].querySelector('.sum').textContent=filled?s:'';rows[i].querySelector('.cum').textContent=filled?cum:''});
+ const goal=S.base+48,plan=S.base+8*done,remain=Math.max(0,goal-cum),left=6-done;
+ const k=[[cum+'世帯','現在のAO生（累計）'],[(cum/goal*100).toFixed(1)+'%',`${goal}世帯への到達率`],[done?(cum/plan*100).toFixed(1)+'%':'-',`${done}ヶ月目時点の計画(${plan})比`],[(cum/S.house*100).toFixed(1)+'%',`普及率（${cum}÷${S.house}）`],[left>0?Math.ceil(remain/left)+'世帯/月':(remain?'未達 '+remain:'達成'),'目標達成に必要なペース'],[ref+'件','紹介経由の獲得']];
+ $('kpis').innerHTML=k.map(x=>`<div class="kpi"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
+ $('pbar').style.width=Math.min(100,cum/goal*100)+'%';
+ $('pnote').textContent=`目標：${goal}世帯（195世帯に対する普及率36.4%）。残り${remain}世帯／残り${left}ヶ月。`;
+ const T=[4*done,2*done,2*done],L=['一般聴講生','Life & Works','商店主DX'];
+ $('layer').innerHTML=L.map((l,j)=>{const p=T[j]?lay[j]/T[j]*100:0;return `<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:14px"><span>${l}</span><span>${lay[j]} / ${T[j]}（${p.toFixed(1)}%）</span></div><div class="bar"><i style="width:${Math.min(100,p)}%;background:${p>=80?'var(--ok)':p>=40?'var(--warn)':'var(--bad)'}"></i></div></div>`}).join('');
+ chart(cums)}
+function chart(c){const W=640,H=240,P=36,mx=Math.max(S.base+52,...c.filter(x=>x!=null));const x=i=>P+i*(W-P*2)/6,y=v=>H-P-v*(H-P*2)/mx;
+ const plan=[S.base,...MONTHS.map((_,i)=>S.base+8*(i+1))];const act=[S.base,...c];
+ let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="累計推移">`;
+ [0,25,50,75].filter(v=>v<=mx).forEach(v=>{s+=`<line x1="${P}" x2="${W-P}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="4" y="${y(v)+4}">${v}</text>`});
+ s+=`<line x1="${P}" x2="${W-P}" y1="${y(S.base+48)}" y2="${y(S.base+48)}" stroke="var(--acc)" stroke-dasharray="4 4"/><text x="${W-P-90}" y="${y(S.base+48)-6}" style="fill:var(--acc)">目標 ${S.base+48}世帯</text>`;
+ ['開始',...MONTHS].forEach((m,i)=>s+=`<text x="${x(i)-10}" y="${H-12}">${m}</text>`);
+ s+=`<polyline fill="none" stroke="var(--sub)" stroke-dasharray="3 3" stroke-width="2" points="${plan.map((v,i)=>x(i)+','+y(v)).join(' ')}"/>`;
+ const pts=act.map((v,i)=>v==null?null:[x(i),y(v),v]).filter(Boolean);
+ s+=`<polyline fill="none" stroke="var(--main)" stroke-width="3" points="${pts.map(p=>p[0]+','+p[1]).join(' ')}"/>`;
+ pts.forEach(p=>s+=`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--main)"/><text x="${p[0]-6}" y="${p[1]+18}" style="fill:var(--ink)">${p[2]}</text>`);
+ s+=`<text x="${P}" y="14" style="fill:var(--main)">━ 実績</text><text x="${P+60}" y="14">┅ 計画(月8世帯)</text></svg>`;$('chart').innerHTML=s}
+
+// ---------- SROI ----------
+function addRow(k){S[k].push(k==='inputs'?['新しい項目',0,0]:['新しいアウトカム',0,0,0,0]);save();renderSroi()}
+function renderSroi(){const mk=(k,id)=>{const tb=document.querySelector('#'+id+' tbody');tb.innerHTML='';
+  S[k].forEach((r,i)=>{const tr=document.createElement('tr');tr.innerHTML=r.map((v,j)=>`<td><input ${j?'type="number"':'type="text"'} data-j="${j}" value="${esc(v)}"></td>`).join('')+`<td class="st"></td><td><button class="btn g" style="padding:4px 8px">×</button></td>`;
+   tr.querySelectorAll('input').forEach(inp=>inp.oninput=()=>{r[inp.dataset.j]=inp.dataset.j==='0'?inp.value:(+inp.value||0);save();calc()});
+   tr.querySelector('button').onclick=()=>{S[k].splice(i,1);save();renderSroi()};tb.appendChild(tr)})};
+ mk('inputs','it');mk('outcomes','ot');calc()}
+function calc(){let I=0,O=0;document.querySelectorAll('#it tbody tr').forEach((tr,i)=>{const r=S.inputs[i],v=r[1]*r[2];I+=v;tr.querySelector('.st').textContent=yen(v)});
+ document.querySelectorAll('#ot tbody tr').forEach((tr,i)=>{const r=S.outcomes[i],v=r[1]*r[2]*(1-r[3]/100)*(1-r[4]/100);O+=v;tr.querySelector('.st').textContent=yen(v)});
+ $('sin').textContent=yen(I);$('sout').textContent=yen(O);$('sroiv').textContent='1 : '+(I?(O/I).toFixed(1):'0.0')}
+
+// ---------- GROW ----------
+const ITEMS=['講座や相談に継続して参加している','電子決済を1人で使える','オンライン申請の流れを説明できる','怪しいメッセージを見分けられる','家庭内ルールを1つ以上実践している','学んだことを家族に話した','困っている人を三島BASEやAO校につないだ','自分の生活知恵（横糸）を講座で共有した','第2講師席で1回以上教えた','紹介から新しいAO生が生まれた'];
+const LV=['体験者','自立者','判断者','伝え手','明日の先生'];
+const lvOf=p=>p<=2?1:p<=4?2:p<=6?3:p<=8?4:5;
+$('chk').innerHTML=ITEMS.map((t,i)=>`<label><input type="checkbox" data-i="${i}"> ${t}</label>`).join('');
+$('chk').onchange=renderGrow;
+function score(){return [...document.querySelectorAll('#chk input')].filter(c=>c.checked).length}
+function renderGrow(){const p=score(),l=lvOf(p);$('lv').innerHTML=LV.map((x,i)=>`<div class="${i+1===l?'on':''}">Lv${i+1}<br>${x}</div>`).join('');
+ const msg={1:'まずは「できた」を1つ増やす伴走を。',2:'日常操作は自立。判断軸（詐欺対策・家庭内ルール）へ。',3:'判断できる段階。家族に話すきっかけを一緒につくりましょう。',4:'伝え手です。第2講師席へ招待しましょう。',5:'明日の先生です。紹介の起点として事例化しましょう。'};
+ $('gmsg').innerHTML=`<b>${p}点／Lv${l} ${LV[l-1]}</b>　${msg[l]}`;
+ document.querySelector('#gt tbody').innerHTML=S.grow.map((g,i)=>`<tr><td>${esc(g.n)}</td><td>${esc(g.d)}</td><td>${g.p}</td><td>Lv${lvOf(g.p)} ${LV[lvOf(g.p)-1]}</td><td><button class="btn g" style="padding:4px 8px" onclick="S.grow.splice(${i},1);save();renderGrow()">×</button></td></tr>`).join('');
+ $('gsum').textContent=`記録${S.grow.length}件／Lv4以上（明日の先生候補）：${S.grow.filter(g=>lvOf(g.p)>=4).length}名`}
+function saveGrow(){S.grow.push({n:$('gname').value.trim()||'（未記入）',d:$('gdate').value,p:score()});save();renderGrow()}
+function resetGrow(){document.querySelectorAll('#chk input').forEach(c=>c.checked=false);$('gname').value='';renderGrow()}
+$('gdate').value=new Date().toLocaleDateString('ja-JP');
+
+// ---------- TALK ----------
+function talk(){const to=$('to').value,pl=$('pl').value,t1=$('t1').value||'○○',t2=$('t2').value||'△△';
+ const call={'ご近所の方':'','友人':'ねえ、','親':'お母さん（お父さん）、','子ども・孫':'ねえ、','お店のお客さん':''}[to];
+ const place={'三島BASE':'三島BASEで気軽に教えてもらえるのよ','近所のお店（AO校）':'近所のお店で気軽に聞けるのよ','ちょっと相談会':'お店の「ちょっと相談会」で気軽に聞けるのよ'}[pl];
+ $('out').textContent=`① ${call}わたし、最近「${t1}」ができるようになってね。\n② 前は「${t2}」って不安だったの。\n③ ${place}。\n④ 今度、一緒に行ってみない？`}
+['to','pl','t1','t2'].forEach(id=>$(id).oninput=talk);
+function copyTalk(){(navigator.clipboard?navigator.clipboard.writeText($('out').textContent):Promise.reject()).then(()=>{$('cp').textContent='コピーしました'},()=>{$('cp').textContent='文章を選択してコピーしてください'})}
+
+function renderAll(){buildMonths();renderDash();renderSroi();renderGrow();talk()}
+renderAll();
+</script>
+</body>
+</html>
